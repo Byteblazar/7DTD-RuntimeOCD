@@ -46,7 +46,7 @@ namespace RuntimeOCD
         }
         internal EvaluatorSet ModdedElements { get; }
         private EvaluatorSet ComparisonSet { get; }
-        private object? State {  get; set; }
+        private object? State { get; set; }
 
         public override void Run(PatchInfo args)
         {

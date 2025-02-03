@@ -39,7 +39,7 @@ namespace RuntimeOCD
         public XElement PatchSourceElement { get; set; }
         public Mod PatchingMod { get; set; }
         public int Result { get; set; }
-        public object State {  get; }
+        public object State { get; }
         public bool MatchesState(object state)
         {
             return state != null && ReferenceEquals(State, state);

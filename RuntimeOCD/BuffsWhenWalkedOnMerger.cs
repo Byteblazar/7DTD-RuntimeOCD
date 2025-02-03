@@ -6,9 +6,7 @@
     You should have received a copy of the GNU General Public License along with RuntimeOCD. If not, see <https://www.gnu.org/licenses/>. 
 */
 
-using System.Text.RegularExpressions;
 using System.Xml.Linq;
-using static EntityVehicle;
 
 namespace RuntimeOCD
 {
@@ -197,9 +195,9 @@ namespace RuntimeOCD
             string value = firstNode.Value.Trim();
 
             AnalyzeMatchedElements(
-                parentSelector: match => 
+                parentSelector: match =>
                 {
-                    if(match is XElement xmatch && xmatch.HasAttribute((XName)targetPropertyName))
+                    if (match is XElement xmatch && xmatch.HasAttribute((XName)targetPropertyName))
                         return xmatch;
                     return null;
                 },

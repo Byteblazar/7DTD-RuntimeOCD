@@ -7,7 +7,6 @@
 */
 
 
-using System.Collections;
 using System.Xml.Linq;
 
 namespace RuntimeOCD
@@ -138,7 +137,7 @@ namespace RuntimeOCD
                 return;
             }
 
-            if(_patchType == HarmonyPatchType.Prefix)
+            if (_patchType == HarmonyPatchType.Prefix)
                 __state = new();
             else if (__state == null)
                 Log.Error($"Another client-side mod seems to be preventing RuntimeOCD from running properly. Yikes.");
@@ -158,7 +157,7 @@ namespace RuntimeOCD
 
             if (Handlers[hbm]?[xbm] is not List<IXmlPatchHandler> handlerStack) return;
 
-            foreach(var handler in handlerStack)
+            foreach (var handler in handlerStack)
             {
                 handler.Run(patchInfo);
                 if (string.IsNullOrWhiteSpace(patchInfo.XPath)) return;
