@@ -14,6 +14,7 @@
 */
 
 using System.Xml.Linq;
+using static EntityVehicle.RemoteData;
 
 namespace RuntimeOCD
 {
@@ -117,6 +118,8 @@ namespace RuntimeOCD
 			// This method merges BuffsWhenWalkedOn properties before mods try to append/prepend them to matching nodes that already have that property.
 			XElement source = PatchInfo.PatchSourceElement;
 			string targetPropertyName = "BuffsWhenWalkedOn";
+			HashSet<XElement> toRemove = new();
+			bool hadElements = source.Elements().Any();
 
 			foreach (XElement patchChild in source.Elements())
 			{
@@ -129,25 +132,39 @@ namespace RuntimeOCD
 				AnalyzeMatchedElements(
 					parentSelector: match =>
 					{
-						if (match is XElement parentElement)
-						{
-							foreach (XElement child in parentElement.Elements())
-							{
-								if (child.TryGetAttribute((XName)"name", out string value) && value == targetPropertyName)
-									return child;
-							}
-						}
+						if(match is XElement xmatch)
+							return xmatch;
 						return null;
 					},
-					elementProcessor: matchedChild =>
+					elementProcessor: parent =>
 					{
-						if (!TryAppendToAttribute(matchedChild, "value", patchPropertyValue))
+						int count = 0;
+						foreach (XElement child in parent.Elements())
 						{
-							matchedChild.SetAttributeValue("value", patchPropertyValue);
+							if (child.TryGetAttribute("name", out string nameAV) && nameAV == targetPropertyName)
+							{
+								TryAppendToAttribute(parent, "value", patchPropertyValue);
+								count++;
+							}
 						}
-						Log.Info($"buff(s) from {PatchInfo.PatchingMod.Name} merged into block '{matchedChild.Parent?.GetAttribute((XName)"name")}'", false);
-						Merged = true;
+						if (count == 0)
+						{
+							XElement prop = new("property");
+							prop.SetAttributeValue("name", targetPropertyName);
+							prop.SetAttributeValue("value", patchPropertyValue);
+							parent.Add(prop);
+						}
+						Log.Info($"buff(s) from {PatchInfo.PatchingMod.Name} merged into block '{parent.GetAttribute("name")}'", false);
 					});
+				toRemove.Add(patchChild);
+			}
+			foreach (XElement patchChild in toRemove)
+			{
+				patchChild.Remove();
+			}
+			if (hadElements && !source.Elements().Any())
+			{
+				Merged = true;
 			}
 		}
 
@@ -157,6 +174,8 @@ namespace RuntimeOCD
 			// It checks the children of the parent of each element in MatchList to avoid conflicts
 			XElement source = PatchInfo.PatchSourceElement;
 			string targetPropertyName = "BuffsWhenWalkedOn";
+			HashSet<XElement> toRemove = new();
+			bool hadElements = source.Elements().Any();
 
 			foreach (XElement patchChild in source.Elements())
 			{
@@ -169,25 +188,39 @@ namespace RuntimeOCD
 				AnalyzeMatchedElements(
 					parentSelector: match =>
 					{
-						if (match is XElement sibling && sibling.Parent is XElement parent)
-						{
-							foreach (XElement siblingChild in parent.Elements())
-							{
-								if (siblingChild.TryGetAttribute((XName)"name", out string value) && value == targetPropertyName)
-									return siblingChild;
-							}
-						}
+						if (match is XElement xmatch)
+							return xmatch.Parent;
 						return null;
 					},
-					elementProcessor: matchedChild =>
+					elementProcessor: parent =>
 					{
-						if (!TryAppendToAttribute(matchedChild, "value", patchPropertyValue))
+						int count = 0;
+						foreach (XElement child in parent.Elements())
 						{
-							matchedChild.SetAttributeValue("value", patchPropertyValue);
+							if (child.TryGetAttribute("name", out string nameAV) && nameAV == targetPropertyName)
+							{
+								TryAppendToAttribute(parent, "value", patchPropertyValue);
+								count++;
+							}
 						}
-						Log.Info($"buff(s) from {PatchInfo.PatchingMod.Name} merged into block '{matchedChild.Parent?.GetAttribute((XName)"name")}'", false);
-						Merged = true;
+						if (count == 0)
+						{
+							XElement prop = new("property");
+							prop.SetAttributeValue("name", targetPropertyName);
+							prop.SetAttributeValue("value", patchPropertyValue);
+							parent.Add(prop);
+						}
+						Log.Info($"buff(s) from {PatchInfo.PatchingMod.Name} merged into block '{parent.GetAttribute("name")}'", false);
 					});
+				toRemove.Add(patchChild);
+			}
+			foreach (XElement patchChild in toRemove)
+			{
+				patchChild.Remove();
+			}
+			if (hadElements && !source.Elements().Any())
+			{
+				Merged = true;
 			}
 		}
 
@@ -195,29 +228,46 @@ namespace RuntimeOCD
 		{
 			XElement source = PatchInfo.PatchSourceElement;
 
-			if (source.FirstNode is not XText firstNode || source.GetAttribute((XName)"name") != "value") return;
+			if (source.FirstNode is not XText firstNode || source.GetAttribute("name") != "value") return;
 			string targetPropertyName = "BuffsWhenWalkedOn";
-			string sourceString = PatchInfo.PatchSourceElement.GetElementString();
 
 			string value = firstNode.Value.Trim();
+			bool hasBuffsWhenWalkedOnAttribute = false;
 
-			AnalyzeMatchedElements(
-				parentSelector: match =>
+			foreach (XElement match in MatchList)
+			{
+				if (match.TryGetAttribute("name", out string nameAV) && nameAV == targetPropertyName)
 				{
-					if (match is XElement xmatch && xmatch.HasAttribute((XName)targetPropertyName))
-						return xmatch;
-					return null;
-				},
-				elementProcessor: target =>
-				{
-					if (TryAppendToAttribute(target, "value", value))
+					hasBuffsWhenWalkedOnAttribute = true;
+					Log.Warn(match.GetElementString());
+					break;
+				}
+			}
+
+			if (hasBuffsWhenWalkedOnAttribute)
+			{
+				AnalyzeMatchedElements(
+					parentSelector: match =>
 					{
-						Log.Info($"buff(s) from {PatchInfo.PatchingMod.Name} merged into block '{target.Parent?.GetAttribute((XName)"name")}'", false);
-						Merged = true;
-					}
-				});
-
+						return match as XElement;
+					},
+					elementProcessor: parent =>
+					{
+						if (parent.TryGetAttribute("name", out string nameAV) && nameAV == targetPropertyName)
+						{
+							if (!TryAppendToAttribute(parent, "value", value))
+							{
+								parent.SetAttributeValue("value", value);
+							}
+							Log.Info($"buff(s) from {PatchInfo.PatchingMod.Name} merged into block '{parent.Parent?.GetAttribute("name")}'", false);
+							Merged = true;
+						}
+						else
+						{
+							parent.SetAttributeValue("value", value);
+						}
+					});
+			}
 		}
-
 	}
 }
