@@ -14,7 +14,6 @@
 */
 
 using System.Xml.Linq;
-using static EntityVehicle.RemoteData;
 
 namespace RuntimeOCD
 {
@@ -132,7 +131,7 @@ namespace RuntimeOCD
 				AnalyzeMatchedElements(
 					parentSelector: match =>
 					{
-						if(match is XElement xmatch)
+						if (match is XElement xmatch)
 							return xmatch;
 						return null;
 					},
@@ -239,7 +238,6 @@ namespace RuntimeOCD
 				if (match.TryGetAttribute("name", out string nameAV) && nameAV == targetPropertyName)
 				{
 					hasBuffsWhenWalkedOnAttribute = true;
-					Log.Warn(match.GetElementString());
 					break;
 				}
 			}
