@@ -19,6 +19,7 @@ namespace RuntimeOCD
 {
 	internal sealed class BuffsWhenWalkedOnMerger : PatchHandler
 	{
+		const string targetPropertyName = "BuffsWhenWalkedOn";
 		public override string Name { get { return "BuffsWhenWalkedOn"; } }
 		private static BuffsWhenWalkedOnMerger? _instance;
 		private static readonly object _lock = new();
@@ -97,11 +98,9 @@ namespace RuntimeOCD
 			{
 				case XMLPatchMethod.Append:
 				case XMLPatchMethod.Prepend:
-					MergeChildren();
-					break;
 				case XMLPatchMethod.InsertAfter:
 				case XMLPatchMethod.InsertBefore:
-					MergeSiblings();
+					MergeElements();
 					break;
 				case XMLPatchMethod.SetAttribute:
 					MergeAttribute();
@@ -112,11 +111,10 @@ namespace RuntimeOCD
 			MatchList.Clear();
 		}
 
-		private void MergeChildren()
+		private void MergeElements()
 		{
-			// This method merges BuffsWhenWalkedOn properties before mods try to append/prepend them to matching nodes that already have that property.
+			// This method merges BuffsWhenWalkedOn properties before mods try to insert them into matching nodes that already have that property.
 			XElement source = PatchInfo.PatchSourceElement;
-			string targetPropertyName = "BuffsWhenWalkedOn";
 			HashSet<XElement> toRemove = new();
 			bool hadElements = source.Elements().Any();
 
@@ -132,7 +130,9 @@ namespace RuntimeOCD
 					parentSelector: match =>
 					{
 						if (match is XElement xmatch)
-							return xmatch;
+							return PatchInfo.MethodType == XMLPatchMethod.Append || PatchInfo.MethodType == XMLPatchMethod.Prepend
+							? xmatch
+							: xmatch.Parent;
 						return null;
 					},
 					elementProcessor: parent =>
@@ -152,64 +152,8 @@ namespace RuntimeOCD
 							prop.SetAttributeValue("name", targetPropertyName);
 							prop.SetAttributeValue("value", patchPropertyValue);
 							parent.Add(prop);
-						}
-						Log.Info($"buff(s) from {PatchInfo.PatchingMod.Name} merged into block '{parent.GetAttribute("name")}'", false);
-					});
-				toRemove.Add(patchChild);
-			}
-			foreach (XElement patchChild in toRemove)
-			{
-				patchChild.Remove();
-			}
-			if (hadElements && !source.Elements().Any())
-			{
-				Merged = true;
-			}
-		}
-
-		private void MergeSiblings()
-		{
-			// This method merges nodes with BuffsWhenWalkedOn properties when mods try to insert them as siblings of other nodes
-			// It checks the children of the parent of each element in MatchList to avoid conflicts
-			XElement source = PatchInfo.PatchSourceElement;
-			string targetPropertyName = "BuffsWhenWalkedOn";
-			HashSet<XElement> toRemove = new();
-			bool hadElements = source.Elements().Any();
-
-			foreach (XElement patchChild in source.Elements())
-			{
-				if (!patchChild.TryGetAttribute("name", out string patchPropertyName) || patchPropertyName != targetPropertyName)
-					continue;
-
-				if (!patchChild.TryGetAttribute("value", out string patchPropertyValue))
-					continue;
-
-				AnalyzeMatchedElements(
-					parentSelector: match =>
-					{
-						if (match is XElement xmatch)
-							return xmatch.Parent;
-						return null;
-					},
-					elementProcessor: parent =>
-					{
-						int count = 0;
-						foreach (XElement child in parent.Elements())
-						{
-							if (child.TryGetAttribute("name", out string nameAV) && nameAV == targetPropertyName)
-							{
-								TryAppendToAttribute(parent, "value", patchPropertyValue);
-								count++;
-							}
-						}
-						if (count == 0)
-						{
-							XElement prop = new("property");
-							prop.SetAttributeValue("name", targetPropertyName);
-							prop.SetAttributeValue("value", patchPropertyValue);
-							parent.Add(prop);
-						}
-						Log.Info($"buff(s) from {PatchInfo.PatchingMod.Name} merged into block '{parent.GetAttribute("name")}'", false);
+						} else
+							Log.Info($"buff(s) from {PatchInfo.PatchingMod.Name} merged into block '{parent.GetAttribute("name")}'", false);
 					});
 				toRemove.Add(patchChild);
 			}
@@ -228,7 +172,6 @@ namespace RuntimeOCD
 			XElement source = PatchInfo.PatchSourceElement;
 
 			if (source.FirstNode is not XText firstNode || source.GetAttribute("name") != "value") return;
-			string targetPropertyName = "BuffsWhenWalkedOn";
 
 			string value = firstNode.Value.Trim();
 			bool hasBuffsWhenWalkedOnAttribute = false;
@@ -261,9 +204,7 @@ namespace RuntimeOCD
 							Merged = true;
 						}
 						else
-						{
 							parent.SetAttributeValue("value", value);
-						}
 					});
 			}
 		}
