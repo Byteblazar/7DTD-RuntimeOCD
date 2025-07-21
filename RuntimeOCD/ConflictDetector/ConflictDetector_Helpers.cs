@@ -29,15 +29,16 @@ namespace RuntimeOCD
 			public void CompareTo(ConflictsTally prev)
 			{
 				Logger log = Instance.Log;
-				log.Info($" R  = {R} {FormatDiff(R - prev.R)}");
-				log.Info($" EO = {EO} {FormatDiff(EO - prev.EO)}");
-				log.Info($" SC = {SC} {FormatDiff(SC - prev.SC)}");
-				log.Info($" AO = {AO} {FormatDiff(AO - prev.AO)}");
-				log.Info($" FP = {FP} {FormatDiff(FP - prev.FP)}");
+				log.Info($" R  = {R} {FormatDiff(prev.R, R)}");
+				log.Info($" EO = {EO} {FormatDiff(prev.EO, EO)}");
+				log.Info($" SC = {SC} {FormatDiff(prev.SC, SC)}");
+				log.Info($" AO = {AO} {FormatDiff(prev.AO, AO)}");
+				log.Info($" FP = {FP} {FormatDiff(prev.FP, FP)}");
 			}
-			public string FormatDiff(long diff)
+			public string FormatDiff(long prev, long curr)
 			{
-				if (diff == 0) return string.Empty;
+				long diff = curr - prev;
+				if (diff == 0 || prev == 0) return string.Empty;
 				return diff < 0 ? $"<color=#40ff40>(-{diff})</color>" : $"<color=#ff4040>(+{diff})</color>";
 			}
 		}

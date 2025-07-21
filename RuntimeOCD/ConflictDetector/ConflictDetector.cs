@@ -32,7 +32,7 @@ namespace RuntimeOCD
 				Log.Info("Purging references from memory.");
 				ModdedElements.Clear();
 				ComparisonSet.Clear();
-				Log.Info($"Writing log files to {Config.LogsPath}");
+				Log.Info($"<color=#00ffb3>Writing log files to {Config.LogsPath}</color>");
 				Log.WriteLogFiles();
 				Tally.CompareTo(meta.LastTally);
 				meta.LastTally = Tally;
