@@ -17,7 +17,7 @@ using System.Xml.Linq;
 
 namespace RuntimeOCD
 {
-	internal partial class ConflictDetector
+	public partial class ConflictDetector
 	{
 		// These two methods merely fulfill the purpose of tracking which elements are modded and which ones are not
 		// which given the many potential things that can happen, is not as simple as it sounds...

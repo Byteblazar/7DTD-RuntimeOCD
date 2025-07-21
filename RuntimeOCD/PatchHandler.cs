@@ -21,18 +21,18 @@ namespace RuntimeOCD
 	public abstract class PatchHandler : IXmlPatchHandler
 	{
 		public virtual string Name { get { return "Component"; } }
-		protected virtual PatchInfo? PatchInfo { get; set; }
-		protected virtual List<XObject>? MatchList { get; set; }
-		protected virtual Logger? Log { get; set; }
+		public virtual PatchInfo? PatchInfo { get; set; }
+		public virtual List<XObject>? MatchList { get; set; }
+		public virtual Logger? Log { get; set; }
 
 		public abstract void Run(PatchInfo patchInfo);
 
-		protected virtual bool IsUsingSetToReplaceNodes()
+		public virtual bool IsUsingSetToReplaceNodes()
 		{
 			return PatchInfo.MethodType == XMLPatchMethod.Set && !Regex.IsMatch(PatchInfo.XPath, @".*/@\w+$");
 		}
 
-		protected virtual void AnalyzeMatchedElements(Func<XObject, XElement?> parentSelector, Action<XElement> elementProcessor)
+		public virtual void AnalyzeMatchedElements(Func<XObject, XElement?> parentSelector, Action<XElement> elementProcessor)
 		{
 			foreach (XObject match in MatchList)
 			{
@@ -44,7 +44,7 @@ namespace RuntimeOCD
 			}
 		}
 
-		protected virtual bool TryGetXAttribute(XObject obj, string attributeName, out XAttribute? xAttribute)
+		public virtual bool TryGetXAttribute(XObject obj, string attributeName, out XAttribute? xAttribute)
 		{
 			switch (obj)
 			{
@@ -60,7 +60,7 @@ namespace RuntimeOCD
 			}
 		}
 
-		protected virtual bool TryAppendToAttribute(XObject obj, string attributeName, string attributeValue, char separator = ';')
+		public virtual bool TryAppendToAttribute(XObject obj, string attributeName, string attributeValue, char separator = ';')
 		{
 			if (TryGetXAttribute(obj, attributeName, out XAttribute? xAttribute))
 			{

@@ -13,6 +13,8 @@
  * 
 */
 
+using HarmonyLib;
+using System.Reflection;
 using System.Xml.Linq;
 
 namespace RuntimeOCD
@@ -43,20 +45,8 @@ namespace RuntimeOCD
 		private static OcdManager? _instance;
 		private static readonly object _lock = new();
 		public const string Name = "RuntimeOCD";
-		internal static bool IsHost => GameManager.IsDedicatedServer || SingletonMonoBehaviour<ConnectionManager>.Instance.IsServer;
-
-		private OcdManager()
-		{
-			Log = new Logger(Name);
-
-			// this is a 2ⁿ-keyed sparse lookup table of stacks (FILO queues) of IXmlPatchHandlers
-			Handlers = new Dictionary<int, Dictionary<int, List<IXmlPatchHandler>>>();
-
-			RegisterXMLPatchHandler(3, 255, ConflictDetector.Instance);
-			RegisterXMLPatchHandler(3, 79, BuffsWhenWalkedOnMerger.Instance);
-		}
-
-		internal static OcdManager Instance
+		public static bool IsHost => GameManager.IsDedicatedServer || SingletonMonoBehaviour<ConnectionManager>.Instance.IsServer;
+		public static OcdManager Instance
 		{
 			get
 			{
@@ -64,18 +54,55 @@ namespace RuntimeOCD
 				{
 					lock (_lock)
 					{
-						if (_instance == null)
-						{
-							_instance = new OcdManager();
-						}
+						_instance ??= new OcdManager();
 					}
 				}
 				return _instance;
 			}
 		}
-		internal Logger Log { get; }
+		private OcdManager()
+		{
+			Cfg = Config.Load();
+			Meta = Metadata.Load();
+			Log = new Logger();
 
-		internal readonly Dictionary<int, Dictionary<int, List<IXmlPatchHandler>>> Handlers;
+			// this is a 2ⁿ-keyed sparse lookup table of stacks (FILO queues) of IXmlPatchHandlers
+			Handlers = new Dictionary<int, Dictionary<int, List<IXmlPatchHandler>>>();
+
+			if (Cfg.DetectConflicts)
+			{
+				string? lohash = null;
+				if (Cfg.DetectConflictsOnlyWhenModsChanged)
+					lohash = Metadata.GetLoadOrderHash();
+
+				if (Meta.LastLoadOrder != lohash)
+				{
+					Meta.LastLoadOrder = lohash ?? string.Empty;
+					Meta.Save();
+					RegisterXMLPatchHandler(3, 255, ConflictDetector.Instance);
+				}
+			}
+
+			if (Cfg.MergeBuffsWhenWalkedOn)
+				RegisterXMLPatchHandler(3, 79, BuffsWhenWalkedOnMerger.Instance);
+
+			if (Cfg.PreventChallengeCategoryCollisions)
+			{
+				MethodInfo original = typeof(ChallengesFromXml).GetMethod(nameof(ChallengesFromXml.ParseChallengeCategory), BindingFlags.Public | BindingFlags.Static);
+				MethodInfo prefix = typeof(ChallengesFromXml_Patches).GetMethod(nameof(ChallengesFromXml_Patches.Prefix_ParseChallengeCategory), BindingFlags.Public | BindingFlags.Static);
+				RuntimeOCD.harmony?.Patch(
+					original,
+					prefix: new HarmonyMethod(prefix));
+			}
+
+			Cfg.Save();
+		}
+
+		public Config Cfg { get; }
+		public Metadata Meta { get; }
+		public Logger Log { get; }
+		public bool LoadOrderChanged { get; }
+		public Dictionary<int, Dictionary<int, List<IXmlPatchHandler>>> Handlers { get; }
 
 		public void RegisterXMLPatchHandler(
 			HarmonyPatchType harmonyPatchType,
@@ -115,7 +142,7 @@ namespace RuntimeOCD
 					}
 
 					handlerStack.Insert(0, handler);
-					Log.Info($"Queueing ({(HarmonyPatchType)(Math.Log(hbm_lowestBit, 2))} {(XMLPatchMethod)(Math.Log(xbm_lowestBit, 2))}) {handler.Name}", false);
+					Log.Info($"Queueing ({(HarmonyPatchType)(Math.Log(hbm_lowestBit, 2))} {(XMLPatchMethod)(Math.Log(xbm_lowestBit, 2))}) {handler.Name}");
 
 					xbm &= (xbm - 1);
 				}
@@ -135,7 +162,9 @@ namespace RuntimeOCD
 			ref object __state
 			)
 		{
-			if (_targetFile == null
+			if (
+				Handlers.Count == 0
+				|| _targetFile == null
 				|| _patchSourceElement == null
 				|| string.IsNullOrWhiteSpace(_patchingMod?.Name)
 				|| string.IsNullOrWhiteSpace(_xpath))
@@ -161,9 +190,10 @@ namespace RuntimeOCD
 			int hbm = 1 << (int)patchInfo.PatchType;
 			int xbm = 1 << (int)patchInfo.MethodType;
 
-			if (Handlers[hbm]?[xbm] is not List<IXmlPatchHandler> handlerStack) return;
+			if (!Handlers.TryGetValue(hbm, out Dictionary<int, List<IXmlPatchHandler>> d1)) return;
+			if (!d1.TryGetValue(xbm, out List<IXmlPatchHandler> d2)) return;
 
-			foreach (var handler in handlerStack)
+			foreach (var handler in d2)
 			{
 				handler.Run(patchInfo);
 				if (string.IsNullOrWhiteSpace(patchInfo.XPath)) return;

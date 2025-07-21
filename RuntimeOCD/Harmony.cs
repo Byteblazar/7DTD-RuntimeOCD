@@ -22,31 +22,39 @@ namespace RuntimeOCD
 {
 	public class RuntimeOCD : IModApi
 	{
+		public static Harmony? harmony;
 		public void InitMod(Mod mod)
 		{
-			new Harmony(GetType().ToString()).PatchAll(Assembly.GetExecutingAssembly());
+			harmony = new Harmony(GetType().ToString());
+			harmony.PatchAll(Assembly.GetExecutingAssembly());
 		}
 	}
-
-	[HarmonyPatch(typeof(ChallengesFromXml))]
-	internal class HarmonyPatches_ChallengesFromXml
+	/*
+	[HarmonyPatch(typeof(XUiC_MainMenu), nameof(XUiC_MainMenu.OnOpen))]
+	public class HarmonyPatches_MainMenu
 	{
-		[HarmonyPrefix]
-		[HarmonyPatch(nameof(ChallengesFromXml.ParseChallengeCategory))]
-		static bool ParseChallengeCategory(ref XElement e)
+		private static void Postfix(XUiC_MainMenu __instance)
 		{
-			if (!e.TryGetAttribute((XName)"name", out var name)) return true;
+			OcdManager ocd = OcdManager.Instance;
+		}
+	}
+	*/
+
+	public class ChallengesFromXml_Patches
+	{
+		public static void Prefix_ParseChallengeCategory(ref XElement e)
+		{
+			if (!e.TryGetAttribute((XName)"name", out var name)) return;
 			if (ChallengeCategory.s_ChallengeCategories.ContainsKey(name))
 			{
 				ChallengeCategory.s_ChallengeCategories.Remove(name);
 				OcdManager.Instance.Log.Info($"Challenge category '{name}' collision intercepted");
 			}
-			return true;
 		}
 	}
 
 	[HarmonyPatch(typeof(XmlPatchMethods))]
-	internal class HarmonyPatches_XmlPatchMethods
+	public class XmlPatchMethods_Patches
 	{
 		private static OcdManager Ocd => OcdManager.Instance;
 
@@ -54,7 +62,7 @@ namespace RuntimeOCD
 		// Appends a new value to an attribute in the selected node
 		[HarmonyPrefix]
 		[HarmonyPatch(nameof(XmlPatchMethods.AppendByXPath))]
-		static bool Prefix_AppendByXPath(
+		static void Prefix_AppendByXPath(
 			ref XmlFile _targetFile,
 			ref string _xpath,
 			ref XElement _patchSourceElement,
@@ -71,7 +79,6 @@ namespace RuntimeOCD
 				_patchingMod,
 				ref __result,
 				ref __state);
-			return true;
 		}
 
 		[HarmonyPostfix]
@@ -99,7 +106,7 @@ namespace RuntimeOCD
 		// Prepends a new value to an attribute in the selected node
 		[HarmonyPrefix]
 		[HarmonyPatch(nameof(XmlPatchMethods.PrependByXPath))]
-		static bool Prefix_PrependByXPath(
+		static void Prefix_PrependByXPath(
 			ref XmlFile _targetFile,
 			ref string _xpath,
 			ref XElement _patchSourceElement,
@@ -116,7 +123,6 @@ namespace RuntimeOCD
 				_patchingMod,
 				ref __result,
 				ref __state);
-			return true;
 		}
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(XmlPatchMethods.PrependByXPath))]
@@ -142,7 +148,7 @@ namespace RuntimeOCD
 		// Inserts new nodes after the selected nodes as siblings
 		[HarmonyPrefix]
 		[HarmonyPatch(nameof(XmlPatchMethods.InsertAfterByXPath))]
-		static bool Prefix_InsertAfterByXPath(
+		static void Prefix_InsertAfterByXPath(
 			ref XmlFile _targetFile,
 			ref string _xpath,
 			ref XElement _patchSourceElement,
@@ -159,7 +165,6 @@ namespace RuntimeOCD
 				_patchingMod,
 				ref __result,
 				ref __state);
-			return true;
 		}
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(XmlPatchMethods.InsertAfterByXPath))]
@@ -185,7 +190,7 @@ namespace RuntimeOCD
 		// Inserts new nodes before the selected nodes as siblings
 		[HarmonyPrefix]
 		[HarmonyPatch(nameof(XmlPatchMethods.InsertBeforeByXPath))]
-		static bool Prefix_InsertBeforeByXPath(
+		static void Prefix_InsertBeforeByXPath(
 			ref XmlFile _targetFile,
 			ref string _xpath,
 			ref XElement _patchSourceElement,
@@ -202,7 +207,6 @@ namespace RuntimeOCD
 				_patchingMod,
 				ref __result,
 				ref __state);
-			return true;
 		}
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(XmlPatchMethods.InsertBeforeByXPath))]
@@ -228,7 +232,7 @@ namespace RuntimeOCD
 		// Removes the selected nodes and all of their contents/descendants
 		[HarmonyPrefix]
 		[HarmonyPatch(nameof(XmlPatchMethods.RemoveByXPath))]
-		static bool Prefix_RemoveByXPath(
+		static void Prefix_RemoveByXPath(
 			ref XmlFile _targetFile,
 			ref string _xpath,
 			ref XElement _patchSourceElement,
@@ -245,7 +249,6 @@ namespace RuntimeOCD
 				_patchingMod,
 				ref __result,
 				ref __state);
-			return true;
 		}
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(XmlPatchMethods.RemoveByXPath))]
@@ -271,7 +274,7 @@ namespace RuntimeOCD
 		// Modifies the selected nodes or attributes (but does not add new ones)
 		[HarmonyPrefix]
 		[HarmonyPatch(nameof(XmlPatchMethods.SetByXPath))]
-		static bool Prefix_SetByXPath(
+		static void Prefix_SetByXPath(
 			ref XmlFile _targetFile,
 			ref string _xpath,
 			ref XElement _patchSourceElement,
@@ -288,7 +291,6 @@ namespace RuntimeOCD
 				_patchingMod,
 				ref __result,
 				ref __state);
-			return true;
 		}
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(XmlPatchMethods.SetByXPath))]
@@ -314,7 +316,7 @@ namespace RuntimeOCD
 		// Adds or modifies attributes on the selected nodes
 		[HarmonyPrefix]
 		[HarmonyPatch(nameof(XmlPatchMethods.SetAttributeByXPath))]
-		static bool Prefix_SetAttributeByXPath(
+		static void Prefix_SetAttributeByXPath(
 			ref XmlFile _targetFile,
 			ref string _xpath,
 			ref XElement _patchSourceElement,
@@ -331,7 +333,6 @@ namespace RuntimeOCD
 				_patchingMod,
 				ref __result,
 				ref __state);
-			return true;
 		}
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(XmlPatchMethods.SetAttributeByXPath))]
@@ -357,7 +358,7 @@ namespace RuntimeOCD
 		// Removes an attribute in the selected nodes
 		[HarmonyPrefix]
 		[HarmonyPatch(nameof(XmlPatchMethods.RemoveAttributeByXPath))]
-		static bool Prefix_RemoveAttributeByXPath(
+		static void Prefix_RemoveAttributeByXPath(
 			ref XmlFile _targetFile,
 			ref string _xpath,
 			ref XElement _patchSourceElement,
@@ -374,7 +375,6 @@ namespace RuntimeOCD
 				_patchingMod,
 				ref __result,
 				ref __state);
-			return true;
 		}
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(XmlPatchMethods.RemoveAttributeByXPath))]

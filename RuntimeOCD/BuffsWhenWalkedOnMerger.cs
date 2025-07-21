@@ -17,7 +17,7 @@ using System.Xml.Linq;
 
 namespace RuntimeOCD
 {
-	internal sealed class BuffsWhenWalkedOnMerger : PatchHandler
+	public sealed class BuffsWhenWalkedOnMerger : PatchHandler
 	{
 		const string targetPropertyName = "BuffsWhenWalkedOn";
 		public override string Name { get { return "BuffsWhenWalkedOn"; } }
@@ -25,11 +25,7 @@ namespace RuntimeOCD
 		private static readonly object _lock = new();
 		private bool _merged = false;
 
-		private BuffsWhenWalkedOnMerger()
-		{
-			Log = new Logger(OcdManager.Name, Name);
-		}
-		internal static BuffsWhenWalkedOnMerger Instance
+		public static BuffsWhenWalkedOnMerger Instance
 		{
 			get
 			{
@@ -37,14 +33,19 @@ namespace RuntimeOCD
 				{
 					lock (_lock)
 					{
-						if (_instance == null)
-						{
-							_instance = new BuffsWhenWalkedOnMerger();
-						}
+						_instance ??= new BuffsWhenWalkedOnMerger();
 					}
 				}
 				return _instance;
 			}
+		}
+		private BuffsWhenWalkedOnMerger()
+		{
+			Log = new Logger(componentName: Name, hostOnly: true);
+			ModEvents.GameStartDone.RegisterHandler((ref ModEvents.SGameStartDoneData data) =>
+			{
+				Log.WriteLogFiles();
+			});
 		}
 
 		private object? State { get; set; }
@@ -152,8 +153,12 @@ namespace RuntimeOCD
 							prop.SetAttributeValue("name", targetPropertyName);
 							prop.SetAttributeValue("value", patchPropertyValue);
 							parent.Add(prop);
-						} else
-							Log.Info($"buff(s) from {PatchInfo.PatchingMod.Name} merged into block '{parent.GetAttribute("name")}'", false);
+						}
+						else
+						{
+							string logFile = $"BuffsWhenWalkedOn\\{PatchInfo.PatchingMod.FolderName}.txt";
+							Log.AddLine($"buff(s) from {PatchInfo.PatchingMod.Name} merged into block '{parent.GetAttribute("name")}'", logFile);
+						}
 					});
 				toRemove.Add(patchChild);
 			}
@@ -200,7 +205,8 @@ namespace RuntimeOCD
 							{
 								parent.SetAttributeValue("value", value);
 							}
-							Log.Info($"buff(s) from {PatchInfo.PatchingMod.Name} merged into block '{parent.Parent?.GetAttribute("name")}'", false);
+							string logFile = $"BuffsWhenWalkedOnMerger\\{PatchInfo.PatchingMod.FolderName}.txt";
+							Log.AddLine($"buff(s) from {PatchInfo.PatchingMod.Name} merged into block '{parent.Parent?.GetAttribute("name")}'", logFile);
 							Merged = true;
 						}
 						else

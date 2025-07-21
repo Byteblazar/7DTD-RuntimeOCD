@@ -17,24 +17,31 @@ using System.Xml.Linq;
 
 namespace RuntimeOCD
 {
-	internal sealed partial class ConflictDetector : PatchHandler
+	public sealed partial class ConflictDetector : PatchHandler
 	{
 		public override string Name { get { return "Conflict Detector"; } }
 		private static ConflictDetector? _instance;
 		private static readonly object _lock = new();
 		private ConflictDetector()
 		{
-			Log = new Logger(OcdManager.Name, Name);
-			ModdedElements = new();
-			ComparisonSet = new();
-			ModEvents.GameStartDone.RegisterHandler(() =>
+			Log = new Logger(componentName: Name, hostOnly: true);
+			Done = false;
+			ModEvents.GameStartDone.RegisterHandler((ref ModEvents.SGameStartDoneData data) =>
 			{
-				Log.Info($"Purging references from memory.");
+				Metadata meta = OcdManager.Instance.Meta;
+				Log.Info("Purging references from memory.");
 				ModdedElements.Clear();
 				ComparisonSet.Clear();
+				Log.Info($"Writing log files to {Config.LogsPath}");
+				Log.WriteLogFiles();
+				Tally.CompareTo(meta.LastTally);
+				meta.LastTally = Tally;
+				meta.Save();
+				Tally = new ConflictsTally();
+				Done = true;
 			});
 		}
-		internal static ConflictDetector Instance
+		public static ConflictDetector Instance
 		{
 			get
 			{
@@ -42,21 +49,21 @@ namespace RuntimeOCD
 				{
 					lock (_lock)
 					{
-						if (_instance == null)
-						{
-							_instance = new ConflictDetector();
-						}
+						_instance ??= new ConflictDetector();
 					}
 				}
 				return _instance;
 			}
 		}
-		internal EvaluatorSet ModdedElements { get; }
-		private EvaluatorSet ComparisonSet { get; }
+		public EvaluatorSet ModdedElements { get; } = new();
+		private EvaluatorSet ComparisonSet { get; } = new();
 		private object? State { get; set; }
+		private ConflictsTally Tally { get; set; } = new();
+		private bool Done { get; set; }
 
 		public override void Run(PatchInfo args)
 		{
+			if (Done) return;
 			PatchInfo = args;
 			if (!PatchInfo.TargetFile.GetXpathResults(PatchInfo.XPath, out List<XObject> matches)) return;
 			MatchList = matches;
