@@ -14,7 +14,6 @@
 */
 
 using HarmonyLib;
-using System.Reflection;
 using System.Xml.Linq;
 
 namespace RuntimeOCD
@@ -88,11 +87,29 @@ namespace RuntimeOCD
 
 			if (Cfg.PreventChallengeCategoryCollisions)
 			{
-				MethodInfo original = typeof(ChallengesFromXml).GetMethod(nameof(ChallengesFromXml.ParseChallengeCategory), BindingFlags.Public | BindingFlags.Static);
-				MethodInfo prefix = typeof(ChallengesFromXml_Patches).GetMethod(nameof(ChallengesFromXml_Patches.Prefix_ParseChallengeCategory), BindingFlags.Public | BindingFlags.Static);
+				var original = AccessTools.Method(typeof(ChallengesFromXml), nameof(ChallengesFromXml.ParseChallengeCategory), new Type[] { typeof(XElement) });
+				var prefix = AccessTools.Method(typeof(ChallengesFromXml_Patches), nameof(ChallengesFromXml_Patches.Prefix_ParseChallengeCategory));
 				RuntimeOCD.harmony?.Patch(
 					original,
 					prefix: new HarmonyMethod(prefix));
+			}
+
+			if (Cfg.ScreenEffectsCompatibility)
+			{
+				ModEvents.MainMenuOpened.RegisterHandler(ScreenEffects_Patches.ScreenEffectsReset);
+				var original = AccessTools.Method(typeof(ScreenEffects), nameof(ScreenEffects.SetScreenEffect), new Type[] { typeof(string), typeof(float), typeof(float) });
+				var prefix = AccessTools.Method(typeof(ScreenEffects_Patches), nameof(ScreenEffects_Patches.Prefix_SetScreenEffect));
+				RuntimeOCD.harmony?.Patch(
+					original,
+					prefix: new HarmonyMethod(prefix));
+
+				original = AccessTools.Method(typeof(MinEventActionModifyScreenEffect), nameof(MinEventActionModifyScreenEffect.Execute), new Type[] { typeof(MinEventParams) });
+				prefix = AccessTools.Method(typeof(MinEventActionModifyScreenEffect_Patches), nameof(MinEventActionModifyScreenEffect_Patches.Prefix_Execute));
+				var postfix = AccessTools.Method(typeof(MinEventActionModifyScreenEffect_Patches), nameof(MinEventActionModifyScreenEffect_Patches.Postfix_Execute));
+				RuntimeOCD.harmony?.Patch(
+					original,
+					prefix: new HarmonyMethod(prefix),
+					postfix: new HarmonyMethod(postfix));
 			}
 
 			Cfg.Save();
