@@ -28,6 +28,7 @@ namespace RuntimeOCD
 			Done = false;
 			ModEvents.GameStartDone.RegisterHandler((ref ModEvents.SGameStartDoneData data) =>
 			{
+				if (Done) return;
 				Metadata meta = OcdManager.Instance.Meta;
 				Log.Info("Purging references from memory.");
 				ModdedElements.Clear();
