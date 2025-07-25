@@ -16,6 +16,7 @@
 using Challenges;
 using HarmonyLib;
 using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
 using System.Xml.Linq;
 
 namespace RuntimeOCD
@@ -51,21 +52,6 @@ namespace RuntimeOCD
 				ChallengeCategory.s_ChallengeCategories.Remove(name);
 				OcdManager.Instance.Log.Info($"Challenge category '{name}' collision intercepted");
 			}
-		}
-	}
-
-	class MinEventActionModifyScreenEffect_Patches
-	{
-		public static MinEventParams? MSEParams { get; set; }
-
-		public static void Prefix_Execute(MinEventParams _params)
-		{
-			MSEParams = _params;
-		}
-
-		public static void Postfix_Execute()
-		{
-			MSEParams = null;
 		}
 	}
 
@@ -128,6 +114,48 @@ namespace RuntimeOCD
 		{
 			ActiveFX = new();
 			VFXbyName = new();
+		}
+	}
+
+	class MinEventActionModifyScreenEffect_Patches
+	{
+		public static MinEventParams? MSEParams { get; set; }
+
+		public static void Prefix_Execute(MinEventParams _params)
+		{
+			MSEParams = _params;
+		}
+
+		public static void Postfix_Execute()
+		{
+			MSEParams = null;
+		}
+	}
+
+	public class MinEventActionSetAudioMixerState_Patches
+	{
+		public static Dictionary<MinEventActionSetAudioMixerState.AudioMixerStates, HashSet<string>>? IDsByState { get; set; } = new(); // key = state name
+		public static bool Prefix_Execute(ref MinEventParams _params, ref MinEventActionSetAudioMixerState __instance)
+		{
+			MinEventParams p = _params;
+			string Id = $"{p.ParentType}§{p.Buff?.buffName}§{p.Instigator?.entityId}§{p.Self?.entityId}§{p.ItemValue?.GetItemId()}§{p.ItemInventoryData?.item?.GetItemName()}";
+
+			if (!IDsByState.TryGetValue(__instance.State, out var set))
+				IDsByState[__instance.State] = set = new HashSet<string>();
+
+			if (__instance.Value)
+				set.Add(Id);
+			else
+			{
+				set.Remove(Id);
+				if (set.Count > 0)
+					__instance.Value = true;
+			}
+			return true;
+		}
+		public static void AudioMixerStateReset(ref ModEvents.SMainMenuOpenedData _data)
+		{
+			IDsByState = new();
 		}
 	}
 

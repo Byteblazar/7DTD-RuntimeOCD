@@ -112,6 +112,17 @@ namespace RuntimeOCD
 					postfix: new HarmonyMethod(postfix));
 			}
 
+			if (Cfg.AudioMixerCompatibility)
+			{
+				ModEvents.MainMenuOpened.RegisterHandler(MinEventActionSetAudioMixerState_Patches.AudioMixerStateReset);
+				var original = AccessTools.Method(typeof(MinEventActionSetAudioMixerState), nameof(MinEventActionSetAudioMixerState.Execute), new Type[] { typeof(MinEventParams) });
+				var prefix = AccessTools.Method(typeof(MinEventActionSetAudioMixerState_Patches), nameof(MinEventActionSetAudioMixerState_Patches.Prefix_Execute));
+				RuntimeOCD.harmony?.Patch(
+					original,
+					prefix: new HarmonyMethod(prefix));
+
+			}
+
 			Cfg.Save();
 		}
 
