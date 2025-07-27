@@ -15,7 +15,7 @@
 
 namespace RuntimeOCD
 {
-	public class ScreenEffectInfo
+	public class ScreenEffectInfo : MinEventParamsComparer
 	{
 		public float Intensity { get; set; }
 		public float FadeTime { get; set; }
@@ -24,20 +24,8 @@ namespace RuntimeOCD
 		{
 			Intensity = intensity;
 			FadeTime = fadeTime;
-			if (MinEventActionModifyScreenEffect_Patches.MSEParams == null)
-				ID = "hardcoded";
-			else
-			{
-				MinEventParams p = MinEventActionModifyScreenEffect_Patches.MSEParams;
-				ID = $"{name}";
-				if (typeof(MinEventParams).HasField("ParentType")) ID += $"{p.ParentType}";
-
-				if (typeof(MinEventParams).HasField("Buff") && !string.IsNullOrEmpty(p.Buff?.BuffName)) ID += $"{p.Buff?.BuffName}"; // prop
-				else if (typeof(MinEventParams).HasField("Instigator") && !string.IsNullOrEmpty($"{p.Instigator?.entityId}")) ID += $"{p.Instigator?.entityId}";
-				else if (typeof(MinEventParams).HasField("Self") && !string.IsNullOrEmpty($"{p.Self?.entityId}")) ID += $"{p.Self?.entityId}";
-				else if (typeof(MinEventParams).HasField("ItemInventoryData") && typeof(ItemInventoryData).HasField("item") && !string.IsNullOrEmpty($"{p.ItemInventoryData?.item?.GetItemName()}")) ID += $"{p.ItemInventoryData?.item?.GetItemName()}";
-				else if (typeof(MinEventParams).HasField("ItemValue") && !string.IsNullOrEmpty($"{p.ItemValue?.GetItemId()}")) ID += $"{p.ItemValue?.GetItemId()}";
-			}
+			MinEventParams p = MinEventActionModifyScreenEffect_Patches.MSEParams;
+			ID = GetID(p, name);
 		}
 	}
 }
