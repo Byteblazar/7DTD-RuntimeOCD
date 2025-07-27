@@ -15,7 +15,7 @@
 
 namespace RuntimeOCD
 {
-	public abstract class MinEventParamsComparer
+	public class MinEventParamsComparer
 	{
 		public virtual string GetID(MinEventParams p, string name = "")
 		{
@@ -23,32 +23,32 @@ namespace RuntimeOCD
 
 			string id = $"{name}";
 
-			if (typeof(MinEventParams).HasField("ParentType"))
+			if (ReflectionHelpers.TryGetMemberValue<MinEffectController.SourceParentType>(p, "ParentType", out var pType))
 			{
-				id += $"@{p.ParentType}";
-				switch (p.ParentType)
+				id += $"@{pType}";
+				switch (pType)
 				{
 					case MinEffectController.SourceParentType.BuffClass:
-						if (typeof(MinEventParams).HasField("Buff") && !string.IsNullOrEmpty(p.Buff?.BuffName)) id += $"@{p.Buff?.BuffName}"; // prop
+						if(ReflectionHelpers.TryGetNestedMemberValue<string>(p, "Buff", "BuffName", out var buffName) && !string.IsNullOrEmpty(buffName))
+							id += $"@{buffName}"; // prop
 						break;
 					case MinEffectController.SourceParentType.ItemClass:
-						if (typeof(MinEventParams).HasField("ItemInventoryData") && typeof(ItemInventoryData).HasField("item") && !string.IsNullOrEmpty($"{p.ItemInventoryData?.item?.GetItemName()}")) id += $"@{p.ItemInventoryData?.item?.GetItemName()}";
-						else if (typeof(MinEventParams).HasField("ItemValue") && !string.IsNullOrEmpty($"{p.ItemValue?.GetItemId()}")) id += $"@{p.ItemValue?.GetItemId()}";
+						if (ReflectionHelpers.TryGetNestedMemberValue<ItemClass>(p, "ItemInventoryData", "item", out var item) && !string.IsNullOrEmpty(item.GetItemName()))
+							id += $"@{item.GetItemName()}";
+						else if (ReflectionHelpers.TryGetMemberValue<ItemValue>(p, "ItemValue", out var itemValue) && !string.IsNullOrEmpty($"{itemValue.GetItemId()}"))
+							id += $"@{itemValue.GetItemId()}";
 						break;
 					default:
-						if (typeof(MinEventParams).HasField("Instigator") && !string.IsNullOrEmpty($"{p.Instigator?.entityId}")) id += $"@{p.Instigator?.entityId}";
-						else if (typeof(MinEventParams).HasField("Self") && !string.IsNullOrEmpty($"{p.Self?.entityId}")) id += $"@{p.Self?.entityId}";
+						if(ReflectionHelpers.TryGetNestedMemberValue<int>(p, "Instigator", "entityId", out var entityId) && !string.IsNullOrEmpty($"{entityId}"))
+							id += $"@{entityId}";
+						if (ReflectionHelpers.TryGetNestedMemberValue<int>(p, "Self", "entityId", out var selfId) && !string.IsNullOrEmpty($"{selfId}"))
+							id += $"@{selfId}";
 						break;
 				}
 			}
 			else
-			{
-				if (typeof(MinEventParams).HasField("Buff") && !string.IsNullOrEmpty(p.Buff?.BuffName)) id += $"@{p.Buff?.BuffName}"; // prop
-				else if (typeof(MinEventParams).HasField("Instigator") && !string.IsNullOrEmpty($"{p.Instigator?.entityId}")) id += $"@{p.Instigator?.entityId}";
-				else if (typeof(MinEventParams).HasField("Self") && !string.IsNullOrEmpty($"{p.Self?.entityId}")) id += $"@{p.Self?.entityId}";
-				else if (typeof(MinEventParams).HasField("ItemInventoryData") && typeof(ItemInventoryData).HasField("item") && !string.IsNullOrEmpty($"{p.ItemInventoryData?.item?.GetItemName()}")) id += $"@{p.ItemInventoryData?.item?.GetItemName()}";
-				else if (typeof(MinEventParams).HasField("ItemValue") && !string.IsNullOrEmpty($"{p.ItemValue?.GetItemId()}")) id += $"@{p.ItemValue?.GetItemId()}";
-			}
+				throw new Exception("RuntimeOCD has no idea what the hell this is. Contact Byteblazar asap.");
+
 			return id;
 		}
 	}
