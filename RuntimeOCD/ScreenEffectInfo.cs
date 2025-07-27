@@ -29,7 +29,14 @@ namespace RuntimeOCD
 			else
 			{
 				MinEventParams p = MinEventActionModifyScreenEffect_Patches.MSEParams;
-				ID = $"{name}{p.ParentType}§{p.Buff?.buffName}§{p.Instigator?.entityId}§{p.Self?.entityId}§{p.ItemValue?.GetItemId()}§{p.ItemInventoryData?.item?.GetItemName()}";
+				ID = $"{name}";
+				if (typeof(MinEventParams).HasField("ParentType")) ID += $"{p.ParentType}";
+
+				if (typeof(MinEventParams).HasField("Buff") && !string.IsNullOrEmpty(p.Buff?.BuffName)) ID += $"{p.Buff?.BuffName}"; // prop
+				else if (typeof(MinEventParams).HasField("Instigator") && !string.IsNullOrEmpty($"{p.Instigator?.entityId}")) ID += $"{p.Instigator?.entityId}";
+				else if (typeof(MinEventParams).HasField("Self") && !string.IsNullOrEmpty($"{p.Self?.entityId}")) ID += $"{p.Self?.entityId}";
+				else if (typeof(MinEventParams).HasField("ItemInventoryData") && typeof(ItemInventoryData).HasField("item") && !string.IsNullOrEmpty($"{p.ItemInventoryData?.item?.GetItemName()}")) ID += $"{p.ItemInventoryData?.item?.GetItemName()}";
+				else if (typeof(MinEventParams).HasField("ItemValue") && !string.IsNullOrEmpty($"{p.ItemValue?.GetItemId()}")) ID += $"{p.ItemValue?.GetItemId()}";
 			}
 		}
 	}

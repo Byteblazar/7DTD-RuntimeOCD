@@ -130,7 +130,14 @@ namespace RuntimeOCD
 		public static bool Prefix_Execute(ref MinEventParams _params, ref MinEventActionSetAudioMixerState __instance)
 		{
 			MinEventParams p = _params;
-			string Id = $"{p.ParentType}§{p.Buff?.buffName}§{p.Instigator?.entityId}§{p.Self?.entityId}§{p.ItemValue?.GetItemId()}§{p.ItemInventoryData?.item?.GetItemName()}";
+			string Id = $"";
+			if (typeof(MinEventParams).HasField("ParentType")) Id += $"{p.ParentType}";
+
+			if (typeof(MinEventParams).HasField("Buff") && !string.IsNullOrEmpty(p.Buff?.BuffName)) Id += $"{p.Buff?.BuffName}"; // prop
+			else if (typeof(MinEventParams).HasField("Instigator") && !string.IsNullOrEmpty($"{p.Instigator?.entityId}")) Id += $"{p.Instigator?.entityId}";
+			else if (typeof(MinEventParams).HasField("Self") && !string.IsNullOrEmpty($"{p.Self?.entityId}")) Id += $"{p.Self?.entityId}";
+			else if (typeof(MinEventParams).HasField("ItemInventoryData") && typeof(ItemInventoryData).HasField("item") && !string.IsNullOrEmpty($"{p.ItemInventoryData?.item?.GetItemName()}")) Id += $"{p.ItemInventoryData?.item?.GetItemName()}";
+			else if (typeof(MinEventParams).HasField("ItemValue") && !string.IsNullOrEmpty($"{p.ItemValue?.GetItemId()}")) Id += $"{p.ItemValue?.GetItemId()}";
 
 			if (!IDsByState.TryGetValue(__instance.State, out var set))
 				IDsByState[__instance.State] = set = new HashSet<string>();
