@@ -67,7 +67,16 @@ namespace RuntimeOCD
 
 			// this is a 2ⁿ-keyed sparse lookup table of stacks (FILO queues) of IXmlPatchHandlers
 			Handlers = new Dictionary<int, Dictionary<int, List<IXmlPatchHandler>>>();
+		}
 
+		public Config Cfg { get; }
+		public Metadata Meta { get; }
+		public Logger Log { get; }
+		public bool LoadOrderChanged { get; }
+		public Dictionary<int, Dictionary<int, List<IXmlPatchHandler>>> Handlers { get; }
+
+		public void Init()
+		{
 			if (Cfg.DetectConflicts)
 			{
 				string? lohash = null;
@@ -125,12 +134,6 @@ namespace RuntimeOCD
 
 			Cfg.Save();
 		}
-
-		public Config Cfg { get; }
-		public Metadata Meta { get; }
-		public Logger Log { get; }
-		public bool LoadOrderChanged { get; }
-		public Dictionary<int, Dictionary<int, List<IXmlPatchHandler>>> Handlers { get; }
 
 		public void RegisterXMLPatchHandler(
 			HarmonyPatchType harmonyPatchType,

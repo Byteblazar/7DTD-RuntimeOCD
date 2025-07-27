@@ -13,8 +13,6 @@
  * 
 */
 
-using UnityEngine;
-
 namespace RuntimeOCD
 {
 	public class ScreenEffectInfo

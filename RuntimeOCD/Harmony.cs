@@ -16,7 +16,6 @@
 using Challenges;
 using HarmonyLib;
 using System.Reflection;
-using System.Security.Cryptography.X509Certificates;
 using System.Xml.Linq;
 
 namespace RuntimeOCD
@@ -28,19 +27,12 @@ namespace RuntimeOCD
 		{
 			harmony = new Harmony(GetType().ToString());
 			harmony.PatchAll(Assembly.GetExecutingAssembly());
+			ModEvents.GameAwake.RegisterHandler((ref ModEvents.SGameAwakeData data) =>
+			{
+				OcdManager.Instance.Init();
+			});
 		}
 	}
-
-	/*
-	[HarmonyPatch(typeof(XUiC_MainMenu), nameof(XUiC_MainMenu.OnOpen))]
-	public class HarmonyPatches_MainMenu
-	{
-		private static void Postfix(XUiC_MainMenu __instance)
-		{
-			OcdManager ocd = OcdManager.Instance;
-		}
-	}
-	*/
 
 	public class ChallengesFromXml_Patches
 	{
