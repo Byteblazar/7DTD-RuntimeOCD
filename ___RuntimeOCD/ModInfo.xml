@@ -4,6 +4,6 @@
 	<DisplayName value="RuntimeOCD" />
 	<Description value="Detects, logs, and in some cases even solves conflicts between mods." />
 	<Author value="Byteblazar" />
-	<Version value="0.11.0.0" />
+	<Version value="0.12.0.0" />
 	<Website value="https://ko-fi.com/byteblazar" />
 </xml>
