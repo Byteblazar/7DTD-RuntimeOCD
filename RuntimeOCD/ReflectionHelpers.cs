@@ -36,10 +36,8 @@ namespace RuntimeOCD
 			var key = (obj.GetType(), memberName);
 			var member = MemberCache.GetOrAdd(key, k =>
 			{
-				// look for field first
 				var fi = k.Item1.GetField(k.Item2, All);
 				if (fi != null) return fi;
-				// then property
 				var pi = k.Item1.GetProperty(k.Item2, All);
 				return pi;
 			});

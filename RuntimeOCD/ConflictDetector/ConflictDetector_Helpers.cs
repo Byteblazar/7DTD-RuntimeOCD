@@ -39,7 +39,7 @@ namespace RuntimeOCD
 			{
 				long diff = curr - prev;
 				if (diff == 0 || prev == 0) return string.Empty;
-				return diff < 0 ? $"<color=#40ff40>(-{diff})</color>" : $"<color=#ff4040>(+{diff})</color>";
+				return diff < 0 ? $"<color=#40ff40>({diff})</color>" : $"<color=#ff4040>(+{diff})</color>";
 			}
 		}
 		private void TestSiblingCollision(XElement sibling)

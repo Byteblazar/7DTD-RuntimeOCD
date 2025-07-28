@@ -29,7 +29,7 @@ namespace RuntimeOCD
 				switch (pType)
 				{
 					case MinEffectController.SourceParentType.BuffClass:
-						if(ReflectionHelpers.TryGetNestedMemberValue<string>(p, "Buff", "BuffName", out var buffName) && !string.IsNullOrEmpty(buffName))
+						if (ReflectionHelpers.TryGetNestedMemberValue<string>(p, "Buff", "BuffName", out var buffName) && !string.IsNullOrEmpty(buffName))
 							id += $"@{buffName}"; // prop
 						break;
 					case MinEffectController.SourceParentType.ItemClass:
@@ -39,7 +39,7 @@ namespace RuntimeOCD
 							id += $"@{itemValue.GetItemId()}";
 						break;
 					default:
-						if(ReflectionHelpers.TryGetNestedMemberValue<int>(p, "Instigator", "entityId", out var entityId) && !string.IsNullOrEmpty($"{entityId}"))
+						if (ReflectionHelpers.TryGetNestedMemberValue<int>(p, "Instigator", "entityId", out var entityId) && !string.IsNullOrEmpty($"{entityId}"))
 							id += $"@{entityId}";
 						if (ReflectionHelpers.TryGetNestedMemberValue<int>(p, "Self", "entityId", out var selfId) && !string.IsNullOrEmpty($"{selfId}"))
 							id += $"@{selfId}";
