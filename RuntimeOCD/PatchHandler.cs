@@ -38,9 +38,7 @@ namespace RuntimeOCD
 			{
 				var parent = parentSelector(match);
 				if (parent != null)
-				{
 					elementProcessor(parent);
-				}
 			}
 		}
 

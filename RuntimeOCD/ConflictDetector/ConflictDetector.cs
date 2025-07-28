@@ -94,7 +94,7 @@ namespace RuntimeOCD
 					case XMLPatchMethod.Append:
 					case XMLPatchMethod.Prepend:
 						// conflicts when adding children
-						if (MatchList[0] is XElement xElement)
+						if (MatchList[0] is XElement)
 							// it's appending/prepending elements
 							AnalyzeNewChildren();
 						//else if (MatchList[0] is XAttribute xAttribute)

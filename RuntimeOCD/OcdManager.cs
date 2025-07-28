@@ -206,9 +206,12 @@ namespace RuntimeOCD
 			if (_patchType == HarmonyPatchType.Prefix)
 				__state = new();
 			else if (__state == null)
-				Log.Error($"Another client-side mod seems to be preventing RuntimeOCD from running properly. Yikes.");
+			{
+				Log.Error("Another client-side mod seems to be preventing RuntimeOCD from running properly. Yikes.");
+				return;
+			}
 
-			PatchInfo patchInfo = new PatchInfo(_methodType, _patchType, _targetFile, _xpath, _patchSourceElement, _patchingMod, __result, __state);
+			PatchInfo patchInfo = new(_methodType, _patchType, _targetFile, _xpath, _patchSourceElement, _patchingMod, __result, __state);
 			RunHandlers(patchInfo);
 			_targetFile = patchInfo.TargetFile;
 			_xpath = patchInfo.XPath;
@@ -221,8 +224,10 @@ namespace RuntimeOCD
 			int hbm = 1 << (int)patchInfo.PatchType;
 			int xbm = 1 << (int)patchInfo.MethodType;
 
-			if (!Handlers.TryGetValue(hbm, out Dictionary<int, List<IXmlPatchHandler>> d1)) return;
-			if (!d1.TryGetValue(xbm, out List<IXmlPatchHandler> d2)) return;
+			if (
+				!Handlers.TryGetValue(hbm, out Dictionary<int, List<IXmlPatchHandler>> d1)
+				|| !d1.TryGetValue(xbm, out List<IXmlPatchHandler> d2)
+			) return;
 
 			foreach (var handler in d2)
 			{

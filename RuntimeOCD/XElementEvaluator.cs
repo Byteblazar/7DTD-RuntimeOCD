@@ -40,7 +40,7 @@ namespace RuntimeOCD
 		}
 		public bool GetOtherModNames(string modName, out HashSet<string> otherMods)
 		{
-			otherMods = new HashSet<string>(_moddedBy);
+			otherMods = new(_moddedBy);
 			otherMods.Remove(modName);
 			return otherMods.Any();
 		}

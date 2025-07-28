@@ -19,7 +19,7 @@ namespace RuntimeOCD
 	{
 		public virtual string GetID(MinEventParams p, string name = "")
 		{
-			if (p == null) return "hardcoded";
+			if (p == null) return $"{name}@hardcoded";
 
 			string id = $"{name}";
 

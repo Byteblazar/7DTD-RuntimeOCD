@@ -67,8 +67,16 @@ namespace RuntimeOCD
 				else
 				{
 					int n = list.FindIndex(sei => sei.ID == info.ID);
-					list[n].Intensity = _intensity;
-					list[n].FadeTime = _fadeTime;
+					if(n == -1)
+					{
+						OcdManager.Instance.Log.Warn($"ScreenEffects Patcher could not find index of {info.ID}");
+						ActiveFX.Remove(info.ID);
+					}
+					else
+					{
+						list[n].Intensity = _intensity;
+						list[n].FadeTime = _fadeTime;
+					}
 				}
 				if (list.Count > 1)
 				{
