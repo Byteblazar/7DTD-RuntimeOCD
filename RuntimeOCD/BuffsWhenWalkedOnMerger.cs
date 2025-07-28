@@ -114,104 +114,116 @@ namespace RuntimeOCD
 
 		private void MergeElements()
 		{
-			// This method merges BuffsWhenWalkedOn properties before mods try to insert them into matching nodes that already have that property.
 			XElement source = PatchInfo.PatchSourceElement;
-			HashSet<XElement> toRemove = new();
+			var toRemove = new HashSet<XElement>();
 			bool hadElements = source.Elements().Any();
 
 			foreach (XElement patchChild in source.Elements())
 			{
-				if (!patchChild.TryGetAttribute("name", out string patchPropertyName) || patchPropertyName != targetPropertyName)
+				if (!patchChild.TryGetAttribute("name", out string patchPropertyName)
+					|| patchPropertyName != targetPropertyName)
 					continue;
 
 				if (!patchChild.TryGetAttribute("value", out string patchPropertyValue))
 					continue;
 
-				AnalyzeMatchedElements(
-					parentSelector: match =>
-					{
-						if (match is XElement xmatch)
-							return PatchInfo.MethodType == XMLPatchMethod.Append || PatchInfo.MethodType == XMLPatchMethod.Prepend
+				var elementParents = (
+					MatchList?
+						.OfType<XElement>()
+						.Select(xmatch =>
+							(PatchInfo.MethodType == XMLPatchMethod.Append
+							 || PatchInfo.MethodType == XMLPatchMethod.Prepend)
 							? xmatch
-							: xmatch.Parent;
-						return null;
-					},
-					elementProcessor: parent =>
+							: xmatch.Parent)
+						.Where(parent => parent != null)
+						.Cast<XElement>()
+						.ToList()
+				) ?? new List<XElement>();
+
+				foreach (var parent in elementParents)
+				{
+					int count = 0;
+
+					foreach (XElement child in parent.Elements())
 					{
-						int count = 0;
-						foreach (XElement child in parent.Elements())
+						if (child.TryGetAttribute("name", out string nameAV)
+							&& nameAV == targetPropertyName)
 						{
-							if (child.TryGetAttribute("name", out string nameAV) && nameAV == targetPropertyName)
-							{
-								TryAppendToAttribute(parent, "value", patchPropertyValue);
-								count++;
-							}
+							TryAppendToAttribute(parent, "value", patchPropertyValue);
+							count++;
 						}
-						if (count == 0)
-						{
-							XElement prop = new("property");
-							prop.SetAttributeValue("name", targetPropertyName);
-							prop.SetAttributeValue("value", patchPropertyValue);
-							parent.Add(prop);
-						}
-						else
-						{
-							string logFile = $"BuffsWhenWalkedOn\\{PatchInfo.PatchingMod.FolderName}.txt";
-							Log.AddLine($"buff(s) from {PatchInfo.PatchingMod.Name} merged into block '{parent.GetAttribute("name")}'", logFile);
-						}
-					});
+					}
+
+					if (count == 0)
+					{
+						var prop = new XElement("property");
+						prop.SetAttributeValue("name", targetPropertyName);
+						prop.SetAttributeValue("value", patchPropertyValue);
+						parent.Add(prop);
+					}
+					else
+					{
+						string logFile = $"BuffsWhenWalkedOn\\{PatchInfo.PatchingMod.FolderName}.txt";
+						Log.AddLine(
+							$"buff(s) from {PatchInfo.PatchingMod.Name} merged into block '{parent.GetAttribute("name")}'",
+							logFile
+						);
+					}
+				}
+
 				toRemove.Add(patchChild);
 			}
+
 			foreach (XElement patchChild in toRemove)
-			{
 				patchChild.Remove();
-			}
+
 			if (hadElements && !source.Elements().Any())
-			{
 				Merged = true;
-			}
 		}
+
 
 		private void MergeAttribute()
 		{
 			XElement source = PatchInfo.PatchSourceElement;
-
-			if (source.FirstNode is not XText firstNode || source.GetAttribute("name") != "value") return;
+			if (source.FirstNode is not XText firstNode || source.GetAttribute("name") != "value")
+				return;
 
 			string value = firstNode.Value.Trim();
-			bool hasBuffsWhenWalkedOnAttribute = false;
+			bool hasBuffsWhenWalkedOnAttribute = MatchList
+				?.OfType<XElement>()
+				.Any(match =>
+					match.TryGetAttribute("name", out string nameAV)
+					&& nameAV == targetPropertyName
+				) ?? false;
 
-			foreach (XElement match in MatchList)
+			if (!hasBuffsWhenWalkedOnAttribute)
+				return;
+
+			var elementMatches = (
+				MatchList?
+					.OfType<XElement>()
+					.ToList()
+			) ?? new List<XElement>();
+
+			foreach (var parent in elementMatches)
 			{
-				if (match.TryGetAttribute("name", out string nameAV) && nameAV == targetPropertyName)
+				if (parent.TryGetAttribute("name", out string nameAV)
+					&& nameAV == targetPropertyName)
 				{
-					hasBuffsWhenWalkedOnAttribute = true;
-					break;
-				}
-			}
+					if (!TryAppendToAttribute(parent, "value", value))
+						parent.SetAttributeValue("value", value);
 
-			if (hasBuffsWhenWalkedOnAttribute)
-			{
-				AnalyzeMatchedElements(
-					parentSelector: match =>
-					{
-						return match as XElement;
-					},
-					elementProcessor: parent =>
-					{
-						if (parent.TryGetAttribute("name", out string nameAV) && nameAV == targetPropertyName)
-						{
-							if (!TryAppendToAttribute(parent, "value", value))
-							{
-								parent.SetAttributeValue("value", value);
-							}
-							string logFile = $"BuffsWhenWalkedOnMerger\\{PatchInfo.PatchingMod.FolderName}.txt";
-							Log.AddLine($"buff(s) from {PatchInfo.PatchingMod.Name} merged into block '{parent.Parent?.GetAttribute("name")}'", logFile);
-							Merged = true;
-						}
-						else
-							parent.SetAttributeValue("value", value);
-					});
+					string logFile = $"BuffsWhenWalkedOnMerger\\{PatchInfo.PatchingMod.FolderName}.txt";
+					Log.AddLine(
+						$"buff(s) from {PatchInfo.PatchingMod.Name} merged into block '{parent.Parent?.GetAttribute("name")}'",
+						logFile
+					);
+					Merged = true;
+				}
+				else
+				{
+					parent.SetAttributeValue("value", value);
+				}
 			}
 		}
 	}

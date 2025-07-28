@@ -73,6 +73,7 @@ namespace RuntimeOCD
 		public Metadata Meta { get; }
 		public Logger Log { get; }
 		public bool LoadOrderChanged { get; }
+		public bool Ready { get; set; } = false;
 		public Dictionary<int, Dictionary<int, List<IXmlPatchHandler>>> Handlers { get; }
 
 		public void Init()
@@ -133,6 +134,7 @@ namespace RuntimeOCD
 			}
 
 			Cfg.Save();
+			Ready = true;
 		}
 
 		public void RegisterXMLPatchHandler(
@@ -194,7 +196,7 @@ namespace RuntimeOCD
 			)
 		{
 			if (
-				Handlers.Count == 0
+				!Ready
 				|| _targetFile == null
 				|| _patchSourceElement == null
 				|| string.IsNullOrWhiteSpace(_patchingMod?.Name)
@@ -213,6 +215,7 @@ namespace RuntimeOCD
 
 			PatchInfo patchInfo = new(_methodType, _patchType, _targetFile, _xpath, _patchSourceElement, _patchingMod, __result, __state);
 			RunHandlers(patchInfo);
+
 			_targetFile = patchInfo.TargetFile;
 			_xpath = patchInfo.XPath;
 			_patchSourceElement = patchInfo.PatchSourceElement;

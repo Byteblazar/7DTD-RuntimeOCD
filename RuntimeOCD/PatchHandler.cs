@@ -32,16 +32,6 @@ namespace RuntimeOCD
 			return PatchInfo.MethodType == XMLPatchMethod.Set && !Regex.IsMatch(PatchInfo.XPath, @".*/@\w+$");
 		}
 
-		public virtual void AnalyzeMatchedElements(Func<XObject, XElement?> parentSelector, Action<XElement> elementProcessor)
-		{
-			foreach (XObject match in MatchList)
-			{
-				var parent = parentSelector(match);
-				if (parent != null)
-					elementProcessor(parent);
-			}
-		}
-
 		public virtual bool TryGetXAttribute(XObject obj, string attributeName, out XAttribute? xAttribute)
 		{
 			switch (obj)

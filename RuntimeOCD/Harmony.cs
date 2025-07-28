@@ -67,7 +67,7 @@ namespace RuntimeOCD
 				else
 				{
 					int n = list.FindIndex(sei => sei.ID == info.ID);
-					if(n == -1)
+					if (n == -1)
 					{
 						OcdManager.Instance.Log.Warn($"ScreenEffects Patcher could not find index of {info.ID}");
 						ActiveFX.Remove(info.ID);

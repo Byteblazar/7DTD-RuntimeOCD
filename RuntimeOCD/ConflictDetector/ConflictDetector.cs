@@ -64,54 +64,63 @@ namespace RuntimeOCD
 
 		public override void Run(PatchInfo args)
 		{
-			if (Done) return;
-			PatchInfo = args;
-			if (!PatchInfo.TargetFile.GetXpathResults(PatchInfo.XPath, out List<XObject> matches)) return;
-			MatchList = matches;
-
-			if (PatchInfo.PatchType == HarmonyPatchType.Prefix)
+			try
 			{
-				TakeSnapshotOfMatchedElements();
+				if (Done) return;
+				PatchInfo = args;
+				if (!PatchInfo.TargetFile.GetXpathResults(PatchInfo.XPath, out List<XObject> matches)) return;
+				MatchList = matches;
 
-				switch (PatchInfo.MethodType)
+				if (PatchInfo.PatchType == HarmonyPatchType.Prefix)
 				{
-					case XMLPatchMethod.Remove:
-						// MatchList is the XElements to be removed (which may or may not have modded descendants)
-						AnalyzeRemovedElements();
-						break;
-					case XMLPatchMethod.Set:
-					case XMLPatchMethod.SetAttribute:
-					case XMLPatchMethod.RemoveAttribute:
-						// MatchList is the XElements to be modified
-						// when not setting an attribute, MatchList will be the parents of the nodes to be replaced with Set (which may or may not have modded descendants)
-						AnalyzeModifiedNodes();
-						break;
-					case XMLPatchMethod.InsertAfter:
-					case XMLPatchMethod.InsertBefore:
-						// MatchList is the immediate siblings (XElement) of the nodes to be added
-						AnalyzeNewSiblings();
-						break;
-					case XMLPatchMethod.Append:
-					case XMLPatchMethod.Prepend:
-						// conflicts when adding children
-						if (MatchList[0] is XElement)
-							// it's appending/prepending elements
-							AnalyzeNewChildren();
-						//else if (MatchList[0] is XAttribute xAttribute)
-						// it's appending/prepending attributes (should not be a conflict)
-						//AnalyzeModifiedNodes();
-						break;
+					TakeSnapshotOfMatchedElements();
 
-					default:
-						throw new NotImplementedException();
+					switch (PatchInfo.MethodType)
+					{
+						case XMLPatchMethod.Remove:
+							// MatchList is the XElements to be removed (which may or may not have modded descendants)
+							AnalyzeRemovedElements();
+							break;
+						case XMLPatchMethod.Set:
+						case XMLPatchMethod.SetAttribute:
+						case XMLPatchMethod.RemoveAttribute:
+							// MatchList is the XElements to be modified
+							// when not setting an attribute, MatchList will be the parents of the nodes to be replaced with Set (which may or may not have modded descendants)
+							AnalyzeModifiedNodes();
+							break;
+						case XMLPatchMethod.InsertAfter:
+						case XMLPatchMethod.InsertBefore:
+							// MatchList is the immediate siblings (XElement) of the nodes to be added
+							AnalyzeNewSiblings();
+							break;
+						case XMLPatchMethod.Append:
+						case XMLPatchMethod.Prepend:
+							// conflicts when adding children
+							if (MatchList[0] is XElement)
+								// it's appending/prepending elements
+								AnalyzeNewChildren();
+							//else if (MatchList[0] is XAttribute xAttribute)
+							// it's appending/prepending attributes (should not be a conflict)
+							//AnalyzeModifiedNodes();
+							break;
+
+						default:
+							throw new NotImplementedException();
+					}
 				}
+
+				else if (PatchInfo.PatchType == HarmonyPatchType.Postfix)
+					UpdateModdedElements();
+
+				MatchList.Clear();
+				State = PatchInfo.State;
 			}
-
-			else if (PatchInfo.PatchType == HarmonyPatchType.Postfix)
-				UpdateModdedElements();
-
-			MatchList.Clear();
-			State = PatchInfo.State;
+			catch (Exception ex)
+			{
+				Log.Warn(ex.ToString());
+				Done = true;
+				// not essential code so we're not rethrowing here
+			}
 		}
 	}
 }
