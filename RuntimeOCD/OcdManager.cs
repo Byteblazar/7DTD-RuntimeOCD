@@ -95,6 +95,9 @@ namespace RuntimeOCD
 			if (Cfg.MergeBuffsWhenWalkedOn)
 				RegisterXMLPatchHandler(3, 79, BuffsWhenWalkedOnMerger.Instance);
 
+			if (Cfg.MergeExplosionBuffs)
+				RegisterXMLPatchHandler(3, 79, ExplosionBuffsMerger.Instance);
+
 			if (Cfg.PreventChallengeCategoryCollisions)
 			{
 				var original = AccessTools.Method(typeof(ChallengesFromXml), nameof(ChallengesFromXml.ParseChallengeCategory), new Type[] { typeof(XElement) });

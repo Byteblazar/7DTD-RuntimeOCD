@@ -22,6 +22,7 @@ namespace RuntimeOCD
 		public bool DetectConflicts { get; set; } = true;
 		public bool DetectConflictsOnlyWhenModsChanged { get; set; } = true;
 		public bool MergeBuffsWhenWalkedOn { get; set; } = true;
+		public bool MergeExplosionBuffs { get; set; } = true;
 		public bool PreventChallengeCategoryCollisions { get; set; } = true;
 		public bool ScreenEffectsCompatibility { get; set; } = true;
 		public bool AudioMixerCompatibility { get; set; } = true;
