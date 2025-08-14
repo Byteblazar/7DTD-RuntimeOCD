@@ -114,15 +114,16 @@ namespace RuntimeOCD
 				var prefix = AccessTools.Method(typeof(ScreenEffects_Patches), nameof(ScreenEffects_Patches.Prefix_SetScreenEffect));
 				RuntimeOCD.harmony?.Patch(
 					original,
-					prefix: new HarmonyMethod(prefix));
+					prefix: new HarmonyMethod(prefix) { priority = HarmonyLib.Priority.Last });
+				;
 
 				original = AccessTools.Method(typeof(MinEventActionModifyScreenEffect), nameof(MinEventActionModifyScreenEffect.Execute), new Type[] { typeof(MinEventParams) });
 				prefix = AccessTools.Method(typeof(MinEventActionModifyScreenEffect_Patches), nameof(MinEventActionModifyScreenEffect_Patches.Prefix_Execute));
 				var postfix = AccessTools.Method(typeof(MinEventActionModifyScreenEffect_Patches), nameof(MinEventActionModifyScreenEffect_Patches.Postfix_Execute));
 				RuntimeOCD.harmony?.Patch(
 					original,
-					prefix: new HarmonyMethod(prefix),
-					postfix: new HarmonyMethod(postfix));
+					prefix: new HarmonyMethod(prefix) { priority = HarmonyLib.Priority.Last },
+					postfix: new HarmonyMethod(postfix) { priority = HarmonyLib.Priority.Last });
 			}
 
 			if (Cfg.AudioMixerCompatibility)
@@ -132,7 +133,7 @@ namespace RuntimeOCD
 				var prefix = AccessTools.Method(typeof(MinEventActionSetAudioMixerState_Patches), nameof(MinEventActionSetAudioMixerState_Patches.Prefix_Execute));
 				RuntimeOCD.harmony?.Patch(
 					original,
-					prefix: new HarmonyMethod(prefix));
+					prefix: new HarmonyMethod(prefix) { priority = HarmonyLib.Priority.Last });
 
 			}
 

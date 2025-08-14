@@ -42,7 +42,6 @@ namespace RuntimeOCD
 
 		public void Save()
 		{
-			// ensure directory exists
 			var dir = System.IO.Path.GetDirectoryName(Path)!;
 			if (!Directory.Exists(dir))
 				Directory.CreateDirectory(dir);
@@ -53,7 +52,6 @@ namespace RuntimeOCD
 				Formatting = Formatting.Indented
 			};
 
-			// serialize the object
 			var serializer = new JsonSerializer();
 			serializer.Serialize(writer, this);
 		}

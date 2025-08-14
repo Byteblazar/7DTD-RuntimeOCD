@@ -13,8 +13,6 @@
  * 
 */
 
-using System.Xml.Linq;
-
 namespace RuntimeOCD
 {
 	public sealed class BuffsWhenWalkedOnMerger : PropertyMergerBase

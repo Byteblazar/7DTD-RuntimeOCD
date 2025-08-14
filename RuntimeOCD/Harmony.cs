@@ -25,7 +25,7 @@ namespace RuntimeOCD
 		public static Harmony? harmony;
 		public void InitMod(Mod mod)
 		{
-			harmony = new Harmony(GetType().ToString());
+			harmony = new Harmony(Assembly.GetExecutingAssembly().FullName);
 			harmony.PatchAll(Assembly.GetExecutingAssembly());
 			ModEvents.GameAwake.RegisterHandler((ref ModEvents.SGameAwakeData data) =>
 			{
@@ -34,7 +34,7 @@ namespace RuntimeOCD
 		}
 	}
 
-	public class ChallengesFromXml_Patches
+	public abstract class ChallengesFromXml_Patches
 	{
 		public static void Prefix_ParseChallengeCategory(ref XElement e)
 		{
@@ -47,7 +47,7 @@ namespace RuntimeOCD
 		}
 	}
 
-	public class ScreenEffects_Patches
+	public abstract class ScreenEffects_Patches
 	{
 		public static HashSet<string>? ActiveFX { get; set; } = new(); // key = SourceID
 		public static Dictionary<string, List<ScreenEffectInfo>>? VFXbyName { get; set; } = new(); // key = FX name
@@ -117,7 +117,7 @@ namespace RuntimeOCD
 		}
 	}
 
-	class MinEventActionModifyScreenEffect_Patches
+	public abstract class MinEventActionModifyScreenEffect_Patches
 	{
 		public static MinEventParams? MSEParams { get; set; }
 
@@ -132,7 +132,7 @@ namespace RuntimeOCD
 		}
 	}
 
-	public class MinEventActionSetAudioMixerState_Patches
+	public abstract class MinEventActionSetAudioMixerState_Patches
 	{
 		public static Dictionary<MinEventActionSetAudioMixerState.AudioMixerStates, HashSet<string>>? IDsByState { get; set; } = new(); // key = state name
 		public static MinEventParamsComparer Comparer { get; set; } = new();
@@ -145,12 +145,14 @@ namespace RuntimeOCD
 
 			if (__instance.Value)
 				set.Add(Id);
-			else
+			else if (set.Contains(Id))
 			{
 				set.Remove(Id);
 				if (set.Count > 0)
 					__instance.Value = true;
 			}
+			else set.Clear();
+
 			return true;
 		}
 		public static void AudioMixerStateReset(ref ModEvents.SMainMenuOpenedData _data)
@@ -160,7 +162,7 @@ namespace RuntimeOCD
 	}
 
 	[HarmonyPatch(typeof(XmlPatchMethods))]
-	public class XmlPatchMethods_Patches
+	public abstract class XmlPatchMethods_Patches
 	{
 		private static OcdManager Ocd => OcdManager.Instance;
 
