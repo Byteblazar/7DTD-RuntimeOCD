@@ -75,14 +75,14 @@ namespace RuntimeOCD
 					{
 						Tally.R++;
 						string logFile = $"ConflictDetector_(R)_Removals\\{patcher.FolderName}__{patcher.VersionString}.txt";
-						Log.AddLine($"((R)) <{patcher.Name}> is removing {toRemove.Name} '{toRemove.GetAttribute("name")}' which was added or modified by the following mod(s):", logFile);
+						Log.AddLine($"((R)) {patcher.Name} is removing <{toRemove.Name}> '{toRemove.GetAttribute("name")}' which was added or modified by the following mod(s):", logFile);
 						Log.AddLine(modNamesOfRemovedElement, "      ", logFile);
 						Log.AddLine($"      Source {patch.GetElementString()}...", logFile);
 						foreach (var modName in modNamesOfRemovedElement)
 						{
 							Mod patched = ModManager.GetMod(modName);
 							logFile = $"ConflictDetector_(R)_Removals\\{patched.FolderName}__{patched.VersionString}.txt";
-							Log.AddLine($"{toRemove.Name} '{toRemove.GetAttribute("name")}', which was added or modified by {modName}, was then REMOVED by {patcher.Name}", logFile);
+							Log.AddLine($"<{toRemove.Name}> '{toRemove.GetAttribute("name")}', which was added or modified by {modName}, was then REMOVED by {patcher.Name}", logFile);
 							Log.AddLine($"      Source {patch.GetElementString()}...", logFile);
 						}
 					}
@@ -121,7 +121,7 @@ namespace RuntimeOCD
 						{
 							Tally.EO++;
 							string logFile = $"ConflictDetector_(EO)_Element_Overrides\\{patcher.FolderName}__{patcher.VersionString}.txt";
-							Log.AddLine($"((EO)) <{patcher.Name}> is overwriting {toModify.Name} '{toModify.GetAttribute("name")}' which was added or modified by the following mod(s):", logFile);
+							Log.AddLine($"((EO)) {patcher.Name} is overwriting <{toModify.Name}> '{toModify.GetAttribute("name")}' which was added or modified by the following mod(s):", logFile);
 							Log.AddLine(modNames, "       ", logFile);
 							Log.AddLine($"       Source {patch.GetElementString()}...", logFile);
 
@@ -129,7 +129,7 @@ namespace RuntimeOCD
 							{
 								Mod otherMod = ModManager.GetMod(other);
 								logFile = $"ConflictDetector_(EO)_Element_Overrides\\{otherMod.FolderName}__{otherMod.VersionString}.txt";
-								Log.AddLine($"{toModify.Name} '{toModify.GetAttribute("name")}', which was added or modified by {other}, was then OVERWRITTEN by {patcher.Name}", logFile);
+								Log.AddLine($"<{toModify.Name}> '{toModify.GetAttribute("name")}', which was added or modified by {other}, was then OVERWRITTEN by {patcher.Name}", logFile);
 								Log.AddLine($"       Source {patch.GetElementString()}...", logFile);
 							}
 						}
@@ -143,7 +143,7 @@ namespace RuntimeOCD
 					{
 						Tally.AO++;
 						string logFile = $"ConflictDetector_(AO)_Attribute_Overrides\\{patcher.FolderName}__{patcher.VersionString}.txt";
-						Log.AddLine($"((AO)) <{patcher.Name}> is modifying {xmatch.Name} '{xmatch.GetAttribute("name")}' which was added or modified by the following mod(s):", logFile);
+						Log.AddLine($"((AO)) {patcher.Name} is modifying <{xmatch.Name}> '{xmatch.GetAttribute("name")}' which was added or modified by the following mod(s):", logFile);
 						Log.AddLine(modNames, "       ", logFile);
 						Log.AddLine($"       Source {patch.GetElementString()}...", logFile);
 
@@ -151,7 +151,7 @@ namespace RuntimeOCD
 						{
 							Mod otherMod = ModManager.GetMod(other);
 							logFile = $"ConflictDetector_(AO)_Attribute_Overrides\\{otherMod.FolderName}__{otherMod.VersionString}.txt";
-							Log.AddLine($"{xmatch.Name} '{xmatch.GetAttribute("name")}', which was added or modified by {other}, was then MODIFIED by {patcher.Name}", logFile);
+							Log.AddLine($"<{xmatch.Name}> '{xmatch.GetAttribute("name")}', which was added or modified by {other}, was then MODIFIED by {patcher.Name}", logFile);
 							Log.AddLine($"       Source {patch.GetElementString()}...", logFile);
 						}
 					}

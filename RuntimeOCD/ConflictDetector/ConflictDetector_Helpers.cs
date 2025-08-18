@@ -85,7 +85,7 @@ namespace RuntimeOCD
 			{
 				Tally.FP++;
 				string logFile = $"ConflictDetector_(FP)_Forced_Parenthood\\{patcher.FolderName}__{patcher.VersionString}.txt";
-				Log.AddLine($"((FP)) <{patcher.Name}> is adding descendants to elements that were added or modified by the following mods:", logFile);
+				Log.AddLine($"((FP)) {patcher.Name} is adding descendants to elements that were added or modified by the following mods:", logFile);
 				Log.AddLine(moddedAncestors, "       ", logFile);
 				Log.AddLine($"       Source {patch.GetElementString()}...", logFile);
 				foreach (var modName in moddedAncestors)
