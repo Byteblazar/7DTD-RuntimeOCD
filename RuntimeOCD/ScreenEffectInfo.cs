@@ -15,17 +15,14 @@
 
 namespace RuntimeOCD
 {
-	public class ScreenEffectInfo : MinEventParamsComparer
+	public class ScreenEffectInfo : MinEventInfo
 	{
 		public float Intensity { get; set; }
-		public float FadeTime { get; set; }
-		public string ID { get; set; }
-		public ScreenEffectInfo(string name, float intensity, float fadeTime)
+		public float Fade { get; set; }
+		public ScreenEffectInfo(string name, float intensity, float fade, string source = "hardcoded") : base(name: name, source: source)
 		{
 			Intensity = intensity;
-			FadeTime = fadeTime;
-			MinEventParams p = MinEventActionModifyScreenEffect_Patches.MSEParams;
-			ID = GetID(p, name);
+			Fade = fade;
 		}
 	}
 }

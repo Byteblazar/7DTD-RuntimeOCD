@@ -115,15 +115,19 @@ namespace RuntimeOCD
 				RuntimeOCD.harmony?.Patch(
 					original,
 					prefix: new HarmonyMethod(prefix) { priority = HarmonyLib.Priority.Last });
-				;
 
 				original = AccessTools.Method(typeof(MinEventActionModifyScreenEffect), nameof(MinEventActionModifyScreenEffect.Execute), new Type[] { typeof(MinEventParams) });
 				prefix = AccessTools.Method(typeof(MinEventActionModifyScreenEffect_Patches), nameof(MinEventActionModifyScreenEffect_Patches.Prefix_Execute));
-				var postfix = AccessTools.Method(typeof(MinEventActionModifyScreenEffect_Patches), nameof(MinEventActionModifyScreenEffect_Patches.Postfix_Execute));
 				RuntimeOCD.harmony?.Patch(
 					original,
-					prefix: new HarmonyMethod(prefix) { priority = HarmonyLib.Priority.Last },
-					postfix: new HarmonyMethod(postfix) { priority = HarmonyLib.Priority.Last });
+					prefix: new HarmonyMethod(prefix) { priority = HarmonyLib.Priority.Last });
+
+				original = AccessTools.Method(typeof(MinEventActionModifyScreenEffect), nameof(MinEventActionModifyScreenEffect.ParseXmlAttribute), new Type[] { typeof(XAttribute) });
+				prefix = AccessTools.Method(typeof(MinEventActionModifyScreenEffect_Patches), nameof(MinEventActionModifyScreenEffect_Patches.Prefix_ParseXmlAttribute));
+				RuntimeOCD.harmony?.Patch(
+					original,
+					prefix: new HarmonyMethod(prefix) { priority = HarmonyLib.Priority.Last });
+
 			}
 
 			if (Cfg.AudioMixerCompatibility)
@@ -135,12 +139,42 @@ namespace RuntimeOCD
 					original,
 					prefix: new HarmonyMethod(prefix) { priority = HarmonyLib.Priority.Last });
 
+				original = AccessTools.Method(typeof(MinEventActionSetAudioMixerState), nameof(MinEventActionSetAudioMixerState.ParseXmlAttribute), new Type[] { typeof(XAttribute) });
+				prefix = AccessTools.Method(typeof(MinEventActionSetAudioMixerState_Patches), nameof(MinEventActionSetAudioMixerState_Patches.Prefix_ParseXmlAttribute));
+				RuntimeOCD.harmony?.Patch(
+					original,
+					prefix: new HarmonyMethod(prefix) { priority = HarmonyLib.Priority.Last });
+
 			}
 
 			Cfg.Save();
 			Ready = true;
 		}
 
+		/*
+		public void LoadDynamicPatch()
+		{
+			string dummyPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "things will break if you touch this folder");
+
+			Log.Info("Loading Dynamic Patch");
+			try
+			{
+				Mod mod = Mod.LoadDefinitionFromFolder(dummyPath);
+				if (mod != null)
+				{
+					if (mod.LoadMod())
+					{
+						ModManager.loadedMods.Add(mod.Name, mod);
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				Log.Error("Failed to load Dynamic Patch");
+				Log.Error(ex.Message);
+			}
+		}
+		*/
 		public void RegisterXMLPatchHandler(
 			HarmonyPatchType harmonyPatchType,
 			XMLPatchMethod XMLpatchMethod,

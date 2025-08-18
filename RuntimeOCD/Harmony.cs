@@ -16,6 +16,7 @@
 using Challenges;
 using HarmonyLib;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 
 namespace RuntimeOCD
@@ -27,6 +28,7 @@ namespace RuntimeOCD
 		{
 			harmony = new Harmony(Assembly.GetExecutingAssembly().FullName);
 			harmony.PatchAll(Assembly.GetExecutingAssembly());
+
 			ModEvents.GameAwake.RegisterHandler((ref ModEvents.SGameAwakeData data) =>
 			{
 				OcdManager.Instance.Init();
@@ -53,7 +55,9 @@ namespace RuntimeOCD
 		public static Dictionary<string, List<ScreenEffectInfo>>? VFXbyName { get; set; } = new(); // key = FX name
 		public static bool Prefix_SetScreenEffect(ref string _name, ref float _intensity, ref float _fadeTime)
 		{
-			ScreenEffectInfo info = new(_name, _intensity, _fadeTime);
+			ScreenEffectInfo info = MinEventActionModifyScreenEffect_Patches._cachedInfo ?? new(_name, _intensity, _fadeTime);
+			MinEventActionModifyScreenEffect_Patches._cachedInfo = null;
+
 			if (_intensity != 0.0f)
 			{
 				if (!VFXbyName.TryGetValue(_name, out var list))
@@ -75,7 +79,7 @@ namespace RuntimeOCD
 					else
 					{
 						list[n].Intensity = _intensity;
-						list[n].FadeTime = _fadeTime;
+						list[n].Fade = _fadeTime;
 					}
 				}
 				if (list.Count > 1)
@@ -83,7 +87,7 @@ namespace RuntimeOCD
 					VFXbyName[_name] = list.OrderByDescending(se => se.Intensity).ToList();
 					ScreenEffectInfo winner = VFXbyName[_name][0];
 					_intensity = winner.Intensity;
-					_fadeTime = winner.FadeTime;
+					_fadeTime = winner.Fade;
 				}
 			}
 			else if (VFXbyName.TryGetValue(_name, out var list))
@@ -97,7 +101,7 @@ namespace RuntimeOCD
 					if (list.Count > 0)
 					{
 						_intensity = list[0].Intensity;
-						_fadeTime = list[0].FadeTime;
+						_fadeTime = list[0].Fade;
 					}
 				}
 				else
@@ -119,26 +123,43 @@ namespace RuntimeOCD
 
 	public abstract class MinEventActionModifyScreenEffect_Patches
 	{
-		public static MinEventParams? MSEParams { get; set; }
+		public static readonly ConditionalWeakTable<MinEventActionModifyScreenEffect, string> CachedSourceStrings = new();
+		public static ScreenEffectInfo? _cachedInfo = null;
 
-		public static void Prefix_Execute(MinEventParams _params)
+		public static void Prefix_ParseXmlAttribute(ref XAttribute _attribute, ref MinEventActionModifyScreenEffect __instance)
 		{
-			MSEParams = _params;
+			if (_attribute.Name.LocalName == "effect_name")
+			{
+				var v = MinEventInfo.GetSource(ref _attribute);
+				CachedSourceStrings.Remove(__instance);
+				CachedSourceStrings.Add(__instance, v);
+			}
 		}
 
-		public static void Postfix_Execute()
+		public static void Prefix_Execute(ref MinEventParams _params, ref MinEventActionModifyScreenEffect __instance)
 		{
-			MSEParams = null;
+			if (CachedSourceStrings.TryGetValue(__instance, out var source))
+				_cachedInfo = new(__instance.effect_name, __instance.intensity, __instance.fade, source);
 		}
 	}
 
 	public abstract class MinEventActionSetAudioMixerState_Patches
 	{
+		static readonly ConditionalWeakTable<MinEventActionSetAudioMixerState, string> CachedSourceStrings = new();
+		public static void Prefix_ParseXmlAttribute(ref XAttribute _attribute, ref MinEventActionSetAudioMixerState __instance)
+		{
+			if (_attribute.Name.LocalName == "enabled")
+			{
+				var v = MinEventInfo.GetSource(ref _attribute);
+				CachedSourceStrings.Remove(__instance);
+				CachedSourceStrings.Add(__instance, v);
+			}
+		}
+
 		public static Dictionary<MinEventActionSetAudioMixerState.AudioMixerStates, HashSet<string>>? IDsByState { get; set; } = new(); // key = state name
-		public static MinEventParamsComparer Comparer { get; set; } = new();
 		public static bool Prefix_Execute(ref MinEventParams _params, ref MinEventActionSetAudioMixerState __instance)
 		{
-			string Id = Comparer.GetID(_params);
+			if (!CachedSourceStrings.TryGetValue(__instance, out var Id)) return true;
 
 			if (!IDsByState.TryGetValue(__instance.State, out var set))
 				IDsByState[__instance.State] = set = new HashSet<string>();
@@ -160,6 +181,7 @@ namespace RuntimeOCD
 			IDsByState = new();
 		}
 	}
+
 
 	[HarmonyPatch(typeof(XmlPatchMethods))]
 	public abstract class XmlPatchMethods_Patches
