@@ -139,6 +139,13 @@ namespace RuntimeOCD
 					original,
 					prefix: new HarmonyMethod(prefix) { priority = HarmonyLib.Priority.Last });
 
+				ModEvents.MainMenuOpened.RegisterHandler(MinEventActionSetAudioMixerState_Patches.AudioMixerStateReset);
+				original = AccessTools.Method(typeof(MinEventActionSetAudioMixerState), nameof(MinEventActionSetAudioMixerState.Execute), new Type[] { typeof(MinEventParams) });
+				var postfix = AccessTools.Method(typeof(MinEventActionSetAudioMixerState_Patches), nameof(MinEventActionSetAudioMixerState_Patches.Postfix_Execute));
+				RuntimeOCD.harmony?.Patch(
+					original,
+					postfix: new HarmonyMethod(postfix) { priority = HarmonyLib.Priority.Last });
+
 				original = AccessTools.Method(typeof(MinEventActionSetAudioMixerState), nameof(MinEventActionSetAudioMixerState.ParseXmlAttribute), new Type[] { typeof(XAttribute) });
 				prefix = AccessTools.Method(typeof(MinEventActionSetAudioMixerState_Patches), nameof(MinEventActionSetAudioMixerState_Patches.Prefix_ParseXmlAttribute));
 				RuntimeOCD.harmony?.Patch(

@@ -157,8 +157,9 @@ namespace RuntimeOCD
 		}
 
 		public static Dictionary<MinEventActionSetAudioMixerState.AudioMixerStates, HashSet<string>>? IDsByState { get; set; } = new(); // key = state name
-		public static bool Prefix_Execute(ref MinEventParams _params, ref MinEventActionSetAudioMixerState __instance)
+		public static bool Prefix_Execute(ref MinEventParams _params, ref MinEventActionSetAudioMixerState __instance, out bool __state)
 		{
+			__state = false;
 			if (!CachedSourceStrings.TryGetValue(__instance, out var Id)) return true;
 
 			if (!IDsByState.TryGetValue(__instance.State, out var set))
@@ -170,11 +171,35 @@ namespace RuntimeOCD
 			{
 				set.Remove(Id);
 				if (set.Count > 0)
-					__instance.Value = true;
+					__state = true;
 			}
 			else set.Clear();
 
 			return true;
+		}
+		public static void Postfix_Execute(ref MinEventParams _params, ref MinEventActionSetAudioMixerState __instance, bool __state)
+		{
+			if (!__state) return;
+
+			if (__instance.targets == null) return;
+			for (int index = 0; index < __instance.targets.Count; ++index)
+			{
+				EntityPlayerLocal? target = __instance.targets[index] as EntityPlayerLocal;
+				if (target != null)
+				{
+					switch (__instance.State)
+					{
+						case MinEventActionSetAudioMixerState.AudioMixerStates.Stunned:
+							target.isStunned = true;
+							continue;
+						case MinEventActionSetAudioMixerState.AudioMixerStates.Deafened:
+							target.isDeafened = true;
+							continue;
+						default:
+							continue;
+					}
+				}
+			}
 		}
 		public static void AudioMixerStateReset(ref ModEvents.SMainMenuOpenedData _data)
 		{
